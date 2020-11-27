@@ -1,0 +1,115 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+		<link rel="shortcut icon" href="#" />
+        <title>如果你不是辣个蓝人，那么你看到了不该看的东西</title>
+    </head>
+    <body>
+        <p>现在的作业是：{{ zyType }}<br>文件类型是：{{ fileType }}</p>
+        <form action="/fbzy" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            这次作业叫什么？
+            <input type="text" name="zy">
+            文件类型：
+            <select name="ftype">
+                {% for ft in fileTypes %}
+                <option value="{{ ft.type }}">{{ ft.cnn }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" class="btn" value="发布任务">
+        </form>
+        <form action="/jszy" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="submit" class="btn" value="结束任务">
+        </form>
+        <!-- {% if messages %}
+        <script>
+            {% for msg in messages %}
+            alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+        {% endif %} -->
+    </body>
+</html>
+
+<style>
+    body {
+        width: 100%;
+        height: 100vh;
+        background-image: url("http://211.69.26.153:23333/getfile?fn=bg.png");
+        background-size: cover;
+        background-position: center;
+        text-align: center;
+        margin: 0%;
+        padding: 0%;
+        overflow: hidden;
+    }
+    .content {
+        width: 80%;
+        margin: auto;
+    }
+    .name {
+        width: 150px;
+        height: 50px;
+        margin: 0;
+        display: inline-block;
+    }
+    form {
+        width: 200px;
+        height: 50px;
+        margin: 100px auto;
+        text-align: center;
+    }
+    input {
+        margin: 20px;
+    }
+    p {
+        width: 80%;
+        margin: auto;
+        position: relative;
+        top: 50px;
+        display: block;
+        font-size: 20px;
+        line-height: 35px;
+    }
+    code {
+        background-color: rgb(255, 255, 153);
+        color: #b030b0;
+    }
+
+  .btn {
+    display: inline-block;
+    box-sizing: border-box;
+    height: 35px;
+    width: 150px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    color: #fff;
+    background-color: purple;
+    border-color: purple;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    border: 1px solid transparent;
+    border-radius: 4px;
+  }
+
+  .btn-cover {
+    display: block;
+    /* height: 50px;
+    width: 200px; */
+    margin: 0;
+    background-color: rebeccapurple;
+  }
+
+  .btn-list {
+    height: 50px;
+    /* background-color: #ccc; */
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+</style>

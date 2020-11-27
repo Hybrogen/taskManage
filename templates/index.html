@@ -1,0 +1,177 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel="shortcut icon" href="#" />
+		<title>临时正经网站</title>
+	</head>
+
+	<body>
+		<h1>微机原理第四次实验</h1>
+		<p>命名为“学号+姓名”【例：<b> 181360242李虹雨{{ fileType }} </b>】<br>请互相转告，尽快在此页提交</p>
+
+		<form action="/tj" method="POST" enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="card">
+				<div>
+					<input type="text" class="text" value="">
+					<label for="file">
+						<div class="btn">点击选择文件</div>
+					</label>
+					<input type="file" id="file" name="zy" hidden onchange="onFileChange()" />
+				</div>
+				<div class="text-wrap">
+					<input type="submit" class="btn" value="提交文件">
+				</div>
+			</div>
+		</form>
+
+		<h1>未交人员名单</h1>
+		<div class="content">
+			{% for name in names %}
+			<div class="name">{{ name }}</div>
+			{% endfor %}
+		</div>
+	</body>
+
+</html>
+
+<script>
+	function onFileChange() {
+		const file = document.querySelector("#file")
+		console.log(file.files[0])
+		document.querySelector('.text').value = file.files[0].name
+	}
+</script>
+
+<style>
+body {
+	width: 100%;
+	height: 100vh;
+	background-image: url("http://211.69.26.153:23333/getfile?fn=bg.png");
+	background-size: cover;
+	background-position: center;
+	text-align: center;
+	margin: 0%;
+	padding: 0%;
+	overflow: hidden;
+}
+
+  .content {
+	  width: 80%;
+	  margin: auto;
+  }
+
+  .name {
+	  width: 150px;
+	  height: 50px;
+	  margin: 0;
+	  display: inline-block;
+  }
+
+  form {
+	  width: 200px;
+	  height: 50px;
+	  margin: 100px auto;
+	  text-align: center;
+  }
+
+  input {
+	  margin: 20px;
+  }
+
+  p {
+	  width: 80%;
+	  margin: auto;
+	  position: relative;
+	  top: 50px;
+	  display: block;
+	  font-size: 20px;
+	  line-height: 35px;
+  }
+
+  code {
+	  background-color: rgb(255, 255, 153);
+	  color: #b030b0;
+  }
+</style>
+<style>
+  form {
+	  width: 60%;
+	  min-width: 800px;
+	  margin: 60px auto;
+  }
+
+  .card {
+	  width: 100%;
+  }
+
+  .text-wrap {
+	  width: 100%;
+	  text-align: center;
+  }
+
+  .btn {
+	  display: inline-block;
+	  box-sizing: border-box;
+	  height: 35px;
+	  width: 150px;
+	  margin-top: 5px;
+	  margin-bottom: 5px;
+	  color: #fff;
+	  background-color: purple;
+	  border-color: purple;
+	  padding: 6px 12px;
+	  font-size: 14px;
+	  font-weight: 400;
+	  text-align: center;
+	  white-space: nowrap;
+	  vertical-align: middle;
+	  border: 1px solid transparent;
+	  border-radius: 4px;
+	  cursor: pointer;
+  }
+
+  .text {
+	  display: inline-block;
+	  height: 35px;
+	  width: calc(100% - 255px);
+	  margin: 5px 5px;
+	  color: #000;
+	  /* background-color: #337ab7;
+		 border-color: purple; */
+	  padding: 6px 12px;
+	  font-size: 14px;
+	  font-weight: 400;
+	  border: 1px solid #ccc;
+	  border-radius: 4px;
+	  outline: none;
+	  box-shadow: 0 0 4px 0px purple;
+	  border: 1px solid transparent;
+  }
+
+  .text:focus {
+	  box-shadow: 0 0 4px 0px purple;
+	  border: 1px solid transparent;
+  }
+
+  .btn-cover {
+	  display: block;
+	  /* height: 50px;
+width: 200px; */
+	  margin: 0;
+	  background-color: rebeccapurple;
+  }
+
+  .btn-list {
+	  height: 50px;
+	  /* background-color: #ccc; */
+	  font-size: 16px;
+	  font-weight: 600;
+  }
+
+  a {
+	  line-height: 50px;
+	  color: #337ab7;
+	  text-decoration: none;
+  }
+</style>
