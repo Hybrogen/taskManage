@@ -6,10 +6,10 @@
 	</head>
 
 	<body>
-		<h1>微机原理第四次实验</h1>
+		<h1>{{ taskName }}</h1>
 		<p>命名为“学号+姓名”【例：<b> 181360242李虹雨{{ fileType }} </b>】<br>请互相转告，尽快在此页提交</p>
 
-		<form action="/tj" method="POST" enctype="multipart/form-data">
+		<form action="/submitFile?taskCode={{ taskCode }}" method="POST" enctype="multipart/form-data">
 			{% csrf_token %}
 			<div class="card">
 				<div>
@@ -17,7 +17,7 @@
 					<label for="file">
 						<div class="btn">点击选择文件</div>
 					</label>
-					<input type="file" id="file" name="zy" hidden onchange="onFileChange()" />
+					<input type="file" id="file" name="submit_file" hidden onchange="onFileChange()" />
 				</div>
 				<div class="text-wrap">
 					<input type="submit" class="btn" value="提交文件">
@@ -27,8 +27,8 @@
 
 		<h1>未交人员名单</h1>
 		<div class="content">
-			{% for name in names %}
-			<div class="name">{{ name }}</div>
+			{% for member in members %}
+			<div class="member" style="color: {{ member.state }}">{{ member.name }}</div>
 			{% endfor %}
 		</div>
 	</body>
@@ -61,7 +61,7 @@ body {
 	  margin: auto;
   }
 
-  .name {
+  .member {
 	  width: 150px;
 	  height: 50px;
 	  margin: 0;
@@ -95,11 +95,11 @@ body {
   }
 </style>
 <style>
-  form {
-	  width: 60%;
-	  min-width: 800px;
-	  margin: 60px auto;
-  }
+form {
+	width: 60%;
+	min-width: 800px;
+	margin: 60px auto;
+}
 
   .card {
 	  width: 100%;

@@ -1,12 +1,15 @@
 <html>
     <head>
         <meta charset="UTF-8">
+		<link rel="shortcut icon" href="#" />
         <title>提示页</title>
     </head>
     <body>
         <h1>{{ ps }}</h1>
-        <!-- <a href="javascript:history.back(-1)">点击此处返回上一页</a> -->
-        <input type="button" value="点击此处返回上一页" onclick="javascript:history.back(-1)">
+		{% for but in buts %}
+		<a href="{{ but.fun }}">{{ but.name }}</a>
+		<!-- <input type="button" value="{{ but.name }}" onclick="{{ but.fun }}"> -->
+		{% endfor %}
     </body>
 </html>
 
@@ -14,11 +17,12 @@
     body {
         text-align: center;
     }
-    input {
+
+    a {
         background-color: rgba(222, 138, 243, 0.6);
         outline: none;
         border-radius: 5px;
-        height: 50px;
+        height: 200px;
         padding: 0 10px;
         margin: 0%;
         border: none;
@@ -26,8 +30,10 @@
         color: cornsilk;
         cursor: pointer;
         text-align: center;
+		text-decoration: none;
     }
-    input:hover {
+
+    a:hover {
         background-color: rgba(191, 255, 175, 0.4);
         color: rgb(155, 32, 138);
     }

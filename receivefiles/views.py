@@ -3,8 +3,18 @@ from django.shortcuts import HttpResponse
  
 import os
 import time
+import json
 
-HWFILES = 'static/files'
+import hashlib
+
+def hon_code(data):
+    code1 = hashlib.md5(data.encode(encoding='UTF-8')).hexdigest()
+    data = code1*233
+    code2 = hashlib.md5(data.encode(encoding='UTF-8')).hexdigest()
+    return code2
+
+HONFILES = 'static/files'
+HONCLASS = 'static/class'
 H_ONSIGN = '->honsplitsignal<-'
 FILETYPES = {
     'pic': {
@@ -20,6 +30,12 @@ FILETYPES = {
         'suffix': ['.zip', '.7z', '.rar'],
     },
 }
+BACKC = {
+        'ps': '你在干什么啊！',
+        'buts': [
+            {'name': '返回上一页', 'fun': 'javascript:history.back(-1)'},
+            ]
+        }
 
 def chack_new_mission():
     for f in os.listdir(HWFILES):
@@ -53,92 +69,185 @@ def no_names():
 
 def index(request):
     rdata = no_names()
+    backc = dict(BACKC)
 
     if rdata == 'NoClass':
-        return render(request, 'back.html', context={'ps': '你访问的班级好像并不存在'})
+        backc['ps'] = '你访问的班级好像并不存在'
+        return render(request, 'back.html', context=backc)
     if rdata == 'NoMission':
-        return render(request, 'back.html', context={'ps': '你访问的任务好像并不存在'})
+        backc['ps'] = '你访问的任务好像并不存在'
+        return render(request, 'back.html', context=backc)
 
     rdata['fileType'] = FILETYPES[rdata['fileType']]['suffix'][0]
     return render(request, 'index.html', context=rdata)
 
-def upload(request):
-    obj = request.FILES.get('zy')
-
-    try:
-        on = obj.name
-        # print(on)
-    except AttributeError:
-        return render(request, 'back.html', context={'ps': '宁还没有选择文件呢！'})
-    fn = chack_new_mission()
-    if fn == None:
-        return render(request, 'back.html', context={'ps': '现在好像没有任务哦'})
-    datas = no_names()
-    if datas == 'NoClass':
-        return render(request, 'back.html', context={'ps': '你访问的班级好像并不存在'})
-    if datas == 'NoMission':
-        return render(request, 'back.html', context={'ps': '你访问的任务好像并不存在'})
-
-    for n in datas['names']:
-        if on.find(n) == 0 and on[on.rfind('.'):] in FILETYPES[datas['fileType']]['suffix']:
-            with open(f'{HWFILES}/{fn}', 'a', encoding='utf-8') as f:
-                f.write(n + '\n')
-            break
-    else:
-        return render(request, 'back.html', context={'ps': '上传失败！文件名/文件格式不正确！或是已经上传过了哦，请回到主页刷新看看未交名单里有没有你'})
-
-    fdir = f'{HWFILES}/{fn[:-4]}'
-    if not os.path.exists(fdir):
-        os.mkdir(fdir)
-    with open(os.path.join(fdir, on), 'wb') as f:
-        for line in obj.chunks():
-            f.write(line)
-
-    return render(request, 'back.html', context={'ps': '上传成功'})
-
-def admin_page(request):
-    datas = no_names()
-    if datas == 'NoClass':
-        return render(request, 'back.html', context={'ps': '你访问的班级好像并不存在'})
-    if datas == 'NoMission':
-        rdata = {
-            'zyType': '目前没有任务',
-            'fileType': '目前没有任务',
-        }
-    else:
-        rdata = {
-            'zyType': datas['zyType'],
-            'fileType': FILETYPES[datas['fileType']]['cnn'],
-        }
-    rdata['fileTypes'] = [{'type': t, 'cnn': FILETYPES[t]['cnn']} for t in FILETYPES]
-    return render(request, 'admin.html', context=rdata)
-
 def publish_homework(request):
-    if chack_new_mission():
-        return render(request, 'back.html', context={'ps': '目前有正在进行的作业'})
+    taskInfo = {
+            'className': '',
+            'taskName': '',
+            'fileType': '',
+            'fileDir': '',
+            }
+
     try:
-        ptime = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time()))
-        zy = request.POST['zy']
-        ftype = request.POST['ftype']
-        with open(f'{HWFILES}/{ptime}_{zy}.new', 'w', encoding='utf-8') as f:
-            f.write(f'{zy}{H_ONSIGN}{ftype}\n')
-        fdir = f'{HWFILES}/{ptime}_{zy}'
-        if not os.path.exists(fdir):
-            os.mkdir(fdir)
-        return render(request, 'back.html', context={'ps': '作业发布成功'})
-    except:
-        return render(request, 'back.html', context={'ps': '你在干什么啊！'})
-    # print(f'zy = {zy} / type(zy) = {type(zy)}')
-    # print(f'ftype = {ftype} / type(ftype) = {type(ftype)}')
-    # from django.contrib import messages
-    # messages.success(request, f'发布成功：{zy} - {ftype}')
+        publishTime = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime(time.time()))
+        className = request.POST['className']
+        taskName = request.POST['taskName']
+        fileDir = f'{HONFILES}/{publishTime}_{className}_{taskName}'
+        taskCode = hon_code(fileDir)
+
+        taskInfo['className'] = className
+        taskInfo['taskName'] = request.POST['taskName']
+        taskInfo['fileType'] = request.POST['fileType']
+        taskInfo['fileDir'] = fileDir
+
+        with open(f'{HONFILES}/{taskCode}', 'w', encoding='utf-8') as f:
+            f.write(json.dumps(taskInfo) + '\n')
+        if not os.path.exists(fileDir):
+            os.mkdir(fileDir)
+
+        backc = dict(BACKC)
+        backc['ps'] = '作业发布成功',
+        backc['buts'][0]['name'] = '返回任务发布页'
+        backc['buts'].append({'name': '查看任务页', 'fun': f"/task/{taskCode}"})
+        return render(request, 'back.html', context=backc)
+    except Exception as e:
+        # print(e)
+        backc = dict(BACKC)
+        return render(request, 'back.html', context=backc)
 
 def close_homework(request):
     fn = chack_new_mission()
+    backc = dict(BACKC)
     if fn == None:
-        return render(request, 'back.html', context={'ps': '现在没有进行中的作业'})
+        backc['ps'] = '现在没有进行中的作业'
+        return render(request, 'back.html', context=backc)
     os.rename(f'{HWFILES}/{fn}', f'{HWFILES}/{fn[:-4]}/{fn[:-4]+".log"}')
-    return render(request, 'back.html', context={'ps': '旧的任务已经关闭了哦，现在你可以发布新任务了'})
+    backc['ps'] = '旧的任务已经关闭了哦，现在你可以发布新任务了'
+    return render(request, 'back.html', context=backc)
+
+# --------------------------------------------------------------------------- #
+
+def task_exists(tid):
+    if not os.path.exists(HONFILES):
+        os.mkdir(HONFILES)
+        return False
+    if not os.path.exists(f'{HONFILES}/{tid}'):
+        return False
+    return True
+
+def get_info(tid, fild):
+    with open(f'{HONFILES}/{tid}', encoding='utf-8') as f:
+        taskInfo = json.loads(f.readline()[:-1])
+    return taskInfo[fild]
+
+def task_page(request, task_id):
+    backc = dict(BACKC)
+
+    if not task_exists(task_id):
+        backc['ps'] = '现在没有进行中的任务'
+        return render(request, 'back.html', context=backc)
+
+    className = get_info(task_id, 'className')
+    classFile = f'{HONCLASS}/{className}.NameList'
+    if not os.path.exists(classFile):
+        backc['ps'] = '你的组织是真实存在的吗，联系一下管理员吧'
+        return render(request, 'back.html', context=backc)
+
+    with open(classFile, encoding='utf-8') as f:
+        names = [i[:-1] for i in f.readlines() if len(i) > 1]
+    names = dict(zip(names, ['balck']*len(names)))
+    with open(f'{HONFILES}/{task_id}', encoding='utf-8') as f:
+        for i in f.readlines()[1:]:
+            if len(i) < 2:
+                continue
+            if i[:-1] in names:
+                names[i[:-1]] = 'green'
+    names = [{'name': _, 'state': names[_]} for _ in names]
+    # print(f'cn = {names}')
+    taskData = {
+            'taskCode': task_id,
+            'fileType': FILETYPES[get_info(task_id, 'fileType')]['suffix'][0],
+            'taskName': get_info(task_id, 'taskName'),
+            'members': names,
+            }
+    return render(request, 'task.html', context=taskData)
+
+def admin_page(request):
+    backc = dict(BACKC)
+
+    try:
+        passwd = request.GET['passwd']
+        # print(f'passwd = |{passwd}|')
+        if hon_code(passwd) != 'db341bc7054f1312cdd6f6b324b9cd18':
+            raise Exception('Wrong password')
+    except:
+        backc['ps'] = '不是辣个蓝人还想来这里，这都像话吗'
+        return render(request, 'back.html', context=backc)
+
+    # backc['ps'] = '恭喜主人登陆成功'
+    # return render(request, 'back.html', context=backc)
+
+    adminData = {
+            'classes': ['',],
+            'fileTypes': [{'type':'','cnn':'',},],
+            'tasks': [{'className':'','taskName':'','fileType':'',},],
+            }
+    adminData['classes'] = [_[:_.rfind('.')] for _ in os.listdir(HONCLASS)]
+    adminData['fileTypes'] = [{'type': _, 'cnn': FILETYPES[_]['cnn']} for _ in FILETYPES]
+    adminData['tasks'] = []
+    for fn in os.listdir(HONFILES):
+        dfn = f'{HONFILES}/{fn}'
+        if os.path.isdir(dfn):
+            continue
+        with open(dfn, encoding='utf-8') as f:
+            adminData['tasks'].append(json.loads(f.readline()[:-1]))
+    return render(request, 'admin.html', context=adminData)
+
+def upload_file(request):
+    backc = dict(BACKC)
+    # backc['ps'] = f'获取的链接: {request.GET["taskCode"]}'
+    # return render(request, 'back.html', context=backc)
+
+    obj = request.FILES.get('submit_file')
+    taskId = request.GET['taskCode']
+    try:
+        objName = obj.name
+    except AttributeError:
+        backc['ps'] = '宁还没有选择文件呢！'
+        backc['buts'][0]['name'] = '返回任务页面'
+        return render(request, 'back.html', context=backc)
+
+    if not task_exists(taskId):
+        backc['ps'] = '你访问的任务好像并不存在'
+        return render(request, 'back.html', context=backc)
+
+    with open(f'{HONFILES}/{taskId}', encoding='utf-8') as f:
+        subName = [i[:-1] for i in f.readlines()[1:] if len(i) > 1]
+    with open(f'{HONCLASS}/{get_info(taskId, "className")}.NameList', encoding='utf-8') as f:
+        lefName = [i[:-1] for i in f.readlines() if len(i) > 1 and i[:-1] not in subName]
+    fileType = get_info(taskId, 'fileType')
+
+    for n in lefName:
+        if objName.find(n) == 0 and objName[objName.rfind('.'):] in FILETYPES[fileType]['suffix']:
+            with open(f'{HONFILES}/{taskId}', 'a', encoding='utf-8') as f:
+                f.write(n + '\n')
+            break
+    else:
+        backc['ps'] = '上传失败！文件名/文件格式不正确！或是已经上传过了哦，请回到主页刷新看看未交名单里有没有你'
+        backc['buts'][0]['name'] = '返回任务页面'
+        return render(request, 'back.html', context=backc)
+
+    fileDir = get_info(taskId, 'fileDir')
+    if not os.path.exists(fileDir):
+        os.mkdir(fileDir)
+    with open(os.path.join(fileDir, objName), 'wb') as f:
+        for line in obj.chunks():
+            f.write(line)
+
+    backc['ps'] = '上传成功'
+    backc['buts'][0]['name'] = '返回任务页面'
+    return render(request, 'back.html', context=backc)
 
 # 配置异常页面
 def page_400(request, e):

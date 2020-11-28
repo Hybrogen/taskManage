@@ -5,13 +5,17 @@
         <title>如果你不是辣个蓝人，那么你看到了不该看的东西</title>
     </head>
     <body>
-        <p>现在的作业是：{{ zyType }}<br>文件类型是：{{ fileType }}</p>
         <form action="/fbzy" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            这次作业叫什么？
-            <input type="text" name="zy">
-            文件类型：
-            <select name="ftype">
+            新的作业叫什么？<input type="text" name="taskName">
+            <br>任务班级：
+			<select name="className">
+                {% for c in classes %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select>
+            <br>文件类型：
+            <select name="fileType">
                 {% for ft in fileTypes %}
                 <option value="{{ ft.type }}">{{ ft.cnn }}</option>
                 {% endfor %}
@@ -22,13 +26,12 @@
             {% csrf_token %}
             <input type="submit" class="btn" value="结束任务">
         </form>
-        <!-- {% if messages %}
-        <script>
-            {% for msg in messages %}
-            alert('{{ msg.message }}');
-            {% endfor %}
-        </script>
-        {% endif %} -->
+		<h1>任务列表</h1>
+		<div class="content">
+			{% for task in tasks %}
+			<div class="task">{{ task.className }} 的 {{ task.taskName }} 任务，需要提交 {{ task.fileType }}</div>
+			{% endfor %}
+		</div>
     </body>
 </html>
 
@@ -44,25 +47,30 @@
         padding: 0%;
         overflow: hidden;
     }
+
     .content {
         width: 80%;
         margin: auto;
     }
-    .name {
+
+    .task {
         width: 150px;
         height: 50px;
         margin: 0;
         display: inline-block;
     }
+
     form {
         width: 200px;
         height: 50px;
         margin: 100px auto;
         text-align: center;
     }
+
     input {
         margin: 20px;
     }
+
     p {
         width: 80%;
         margin: auto;
@@ -72,6 +80,7 @@
         font-size: 20px;
         line-height: 35px;
     }
+
     code {
         background-color: rgb(255, 255, 153);
         color: #b030b0;
