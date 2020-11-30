@@ -24,7 +24,6 @@ urlpatterns = [
     path('submitFile', views.upload_file),
     path('qingshurumima', views.admin_page),
     path('fbzy', views.publish_homework),
-    path('jszy', views.close_homework),
     path('task/<str:task_id>', views.task_page),
     # path('task/', views.task_page, name="task_page"),
 ]

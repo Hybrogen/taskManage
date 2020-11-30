@@ -22,14 +22,11 @@
             </select>
             <input type="submit" class="btn" value="发布任务">
         </form>
-        <form action="/jszy" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <input type="submit" class="btn" value="结束任务">
-        </form>
 		<h1>任务列表</h1>
 		<div class="content">
 			{% for task in tasks %}
-			<div class="task">{{ task.className }} 的 {{ task.taskName }} 任务，需要提交 {{ task.fileType }}</div>
+			<!-- <div class="task">{{ task.className }} 的 {{ task.taskName }} 任务，需要提交 {{ task.fileType }}</div> -->
+			<a class="task" href="{{ task.url }}">{{ task.className }} 的 {{ task.taskName }} 任务，需要提交 {{ task.fileType }}</a>
 			{% endfor %}
 		</div>
     </body>

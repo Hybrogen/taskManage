@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.shortcuts import HttpResponse
- 
+from django.http import FileResponse
+from django.utils.encoding import escape_uri_path
+
 import os
 import time
 import json
@@ -36,50 +38,25 @@ BACKC = {
             {'name': '返回上一页', 'fun': 'javascript:history.back(-1)'},
             ]
         }
-
-def chack_new_mission():
-    for f in os.listdir(HWFILES):
-        if '.new' in f:
-            return f
-    return None
-
-def no_names():
-    if not os.path.exists(HWFILES):
-        os.mkdir(HWFILES)
-
-    if not os.path.exists('static/18物二.NameList'):
-        return 'NoClass'
-    subNames = chack_new_mission()
-    if subNames == None:
-        return 'NoMission'
-
-    with open('static/18物二.NameList', encoding='utf-8') as f:
-        allNames = [i[:-1] for i in f.readlines() if len(i) > 1]
-    with open(f'{HWFILES}/{subNames}', encoding='utf-8') as f:
-        zyType,fileType = f.readline()[:-1].split(H_ONSIGN)
-        subNames = [i[:-1] for i in f.readlines() if len(i) > 1]
-    noNames = [n for n in allNames if n not in subNames]
-
-    rdata = {
-        'names': noNames,
-        'zyType': zyType,
-        'fileType': fileType,
-    }
-    return rdata
+SUFFIXINFO = {
+            'md': {'typen': 'Markdown文档', 'ctype': 'text/plain',},
+            'zip': {'typen': '压缩文件', 'ctype': 'application/x-zip-compressed',},
+            'rar': {'typen': '压缩文件', 'ctype': 'application/octet-stream'},
+            '7z': {'typen': '压缩文件', 'ctype': 'text/plain',},
+            'exe': {'typen': '应用程序', 'ctype': 'application/x-msdownload',},
+            'ino': {'typen': 'Arduino源码', 'ctype': 'text/plain',},
+            'tif': {'typen': '图片', 'ctype': 'image/tiff',},
+            'png': {'typen': '图片', 'ctype': 'image/png',},
+            'txt': {'typen': '文本文档', 'ctype': 'text/plain',},
+            'docx': {'typen': 'Word文档', 'ctype': 'application/msword',},
+            'py': {'typen': 'Python源码', 'ctype': 'text/plain',},
+        }
 
 def index(request):
-    rdata = no_names()
     backc = dict(BACKC)
 
-    if rdata == 'NoClass':
-        backc['ps'] = '你访问的班级好像并不存在'
-        return render(request, 'back.html', context=backc)
-    if rdata == 'NoMission':
-        backc['ps'] = '你访问的任务好像并不存在'
-        return render(request, 'back.html', context=backc)
-
-    rdata['fileType'] = FILETYPES[rdata['fileType']]['suffix'][0]
-    return render(request, 'index.html', context=rdata)
+    backc['ps'] = '你访问的班级好像并不存在'
+    return render(request, 'back.html', context=backc)
 
 def publish_homework(request):
     taskInfo = {
@@ -116,18 +93,6 @@ def publish_homework(request):
         backc = dict(BACKC)
         return render(request, 'back.html', context=backc)
 
-def close_homework(request):
-    fn = chack_new_mission()
-    backc = dict(BACKC)
-    if fn == None:
-        backc['ps'] = '现在没有进行中的作业'
-        return render(request, 'back.html', context=backc)
-    os.rename(f'{HWFILES}/{fn}', f'{HWFILES}/{fn[:-4]}/{fn[:-4]+".log"}')
-    backc['ps'] = '旧的任务已经关闭了哦，现在你可以发布新任务了'
-    return render(request, 'back.html', context=backc)
-
-# --------------------------------------------------------------------------- #
-
 def task_exists(tid):
     if not os.path.exists(HONFILES):
         os.mkdir(HONFILES)
@@ -138,14 +103,61 @@ def task_exists(tid):
 
 def get_info(tid, fild):
     with open(f'{HONFILES}/{tid}', encoding='utf-8') as f:
-        taskInfo = json.loads(f.readline()[:-1])
+        _info = f.readline()
+        if _info[-1] == '\n':
+            _info = _info[:-1]
+        taskInfo = json.loads(_info)
     return taskInfo[fild]
+
+def close_task(request, taskId):
+    backc = dict(BACKC)
+
+    if not task_exists(taskId):
+        backc['ps'] = '这个任务好像已经关闭了哦'
+        return render(request, 'back.html', context=backc)
+
+    os.rename(f'{HONFILES}/{taskId}', f'{get_info(taskId, "fileDir")}/任务信息.log')
+    backc['ps'] = '旧的任务已经关闭了哦'
+    return render(request, 'back.html', context=backc)
+
+def suffix_info(fn, fild):
+    return SUFFIXINFO[fn[fn.rfind('.'):]][fild]
+
+def download_task(request, taskId):
+    backc = dict(BACKC)
+
+    if not task_exists(taskId):
+        backc['ps'] = '已经关闭的任务是不能下载的'
+        return render(request, 'back.html', context=backc)
+
+    zipName = get_info(taskId, 'taskName') + '.zip'
+    fileDir = get_info(taskId, 'fileDir')
+    os.system(f'zip -r {fileDir}/{zipName} {fileDir}')
+
+    zipFile = open(f'{fileDir}/{zipName}','rb')
+    response = FileResponse(zipFile)
+    # response['Content-Type'] = suffix_info(zipName, 'ctype')
+    response['Content-Type'] = 'application/x-zip-compressed'
+    response['Content-Disposition'] = f'attachment;filename={escape_uri_path(zipName)}'
+    return response
 
 def task_page(request, task_id):
     backc = dict(BACKC)
 
+    try:
+        order = hon_code(request.GET['order'])
+        # print(request.GET['order'])
+        if order == '87fa6649f00cd4ae700c3a4ebde5536c':
+            return close_task(request, task_id)
+        if order == '398c84a8351070ad3a1a1a98835adcff':
+            return download_task(request, task_id)
+        raise Exception('Unknown order')
+    except Exception as e:
+        # print(e)
+        pass
+
     if not task_exists(task_id):
-        backc['ps'] = '现在没有进行中的任务'
+        backc['ps'] = '这个任务好像没有再进行中呢'
         return render(request, 'back.html', context=backc)
 
     className = get_info(task_id, 'className')
@@ -155,14 +167,15 @@ def task_page(request, task_id):
         return render(request, 'back.html', context=backc)
 
     with open(classFile, encoding='utf-8') as f:
-        names = [i[:-1] for i in f.readlines() if len(i) > 1]
+        names = [i[:-1] if i[-1]=='\n' else i for i in f.readlines() if len(i) > 1]
     names = dict(zip(names, ['balck']*len(names)))
     with open(f'{HONFILES}/{task_id}', encoding='utf-8') as f:
         for i in f.readlines()[1:]:
             if len(i) < 2:
                 continue
-            if i[:-1] in names:
-                names[i[:-1]] = 'green'
+            n = i[:-1] if i[-1]=='\n' else i
+            if n in names:
+                names[n] = '#73EB2D'
     names = [{'name': _, 'state': names[_]} for _ in names]
     # print(f'cn = {names}')
     taskData = {
@@ -191,17 +204,23 @@ def admin_page(request):
     adminData = {
             'classes': ['',],
             'fileTypes': [{'type':'','cnn':'',},],
-            'tasks': [{'className':'','taskName':'','fileType':'',},],
+            'tasks': [{'className':'','taskName':'','fileType':'','url':'',},],
             }
     adminData['classes'] = [_[:_.rfind('.')] for _ in os.listdir(HONCLASS)]
     adminData['fileTypes'] = [{'type': _, 'cnn': FILETYPES[_]['cnn']} for _ in FILETYPES]
     adminData['tasks'] = []
+    # print(os.listdir(HONFILES))
     for fn in os.listdir(HONFILES):
-        dfn = f'{HONFILES}/{fn}'
-        if os.path.isdir(dfn):
+        if os.path.isdir(f'{HONFILES}/{fn}'):
             continue
-        with open(dfn, encoding='utf-8') as f:
-            adminData['tasks'].append(json.loads(f.readline()[:-1]))
+        taskData = {
+                'url': f'/task/{fn}',
+                'className': get_info(fn, 'className'),
+                'taskName': get_info(fn, 'taskName'),
+                'fileType': FILETYPES[get_info(fn, 'fileType')]['cnn'],
+                }
+        adminData['tasks'].append(dict(taskData))
+        # print('TEST')
     return render(request, 'admin.html', context=adminData)
 
 def upload_file(request):
