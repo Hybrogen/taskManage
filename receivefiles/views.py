@@ -123,16 +123,26 @@ def close_task(request, taskId):
 def suffix_info(fn, fild):
     return SUFFIXINFO[fn[fn.rfind('.'):]][fild]
 
-def download_task(request, taskId):
+def download_task(request, taskId, memberName=''):
     backc = dict(BACKC)
 
     if not task_exists(taskId):
         backc['ps'] = '已经关闭的任务是不能下载的'
         return render(request, 'back.html', context=backc)
 
-    zipName = get_info(taskId, 'taskName') + '.zip'
-    fileDir = get_info(taskId, 'fileDir')
-    os.system(f'zip -r {fileDir}/{zipName} {fileDir}')
+    if memberName == '':
+        zipName = get_info(taskId, 'taskName') + '.zip'
+        fileDir = get_info(taskId, 'fileDir')
+        os.system(f'zip -r {fileDir}/{zipName} {fileDir}')
+    else:
+        fileDir = get_info(taskId, 'fileDir')
+        for fn in os.listdir(fileDir):
+            if fn.find(memberName) == 0:
+                zipName = fn
+                break
+        else:
+            backc['ps'] = '这个成员好像还没有在此任务提交文件'
+            return render(request, 'back.html', context=backc)
 
     zipFile = open(f'{fileDir}/{zipName}','rb')
     response = FileResponse(zipFile)
@@ -150,6 +160,11 @@ def task_page(request, task_id):
         if order == '87fa6649f00cd4ae700c3a4ebde5536c':
             return close_task(request, task_id)
         if order == '398c84a8351070ad3a1a1a98835adcff':
+            try:
+                memberName = request.GET['memberName']
+                return download_task(request, task_id, memberName)
+            except:
+                pass
             return download_task(request, task_id)
         raise Exception('Unknown order')
     except Exception as e:
