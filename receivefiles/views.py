@@ -184,6 +184,7 @@ def task_page(request, task_id):
     with open(classFile, encoding='utf-8') as f:
         names = [i[:-1] if i[-1]=='\n' else i for i in f.readlines() if len(i) > 1]
     names = dict(zip(names, ['balck']*len(names)))
+    notSubmitedNum = len(names)
     with open(f'{HONFILES}/{task_id}', encoding='utf-8') as f:
         for i in f.readlines()[1:]:
             if len(i) < 2:
@@ -191,6 +192,7 @@ def task_page(request, task_id):
             n = i[:-1] if i[-1]=='\n' else i
             if n in names:
                 names[n] = '#73EB2D'
+                notSubmitedNum -= 1
     names = [{'name': _, 'state': names[_]} for _ in names]
     # print(f'cn = {names}')
     taskData = {
@@ -198,6 +200,7 @@ def task_page(request, task_id):
             'fileType': FILETYPES[get_info(task_id, 'fileType')]['suffix'][0],
             'taskName': get_info(task_id, 'taskName'),
             'members': names,
+            'nsn': notSubmitedNum,
             }
     return render(request, 'task.html', context=taskData)
 

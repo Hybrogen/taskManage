@@ -2,7 +2,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<link rel="shortcut icon" href="#" />
-		<title>临时正经网站</title>
+		<title>正式正经网站</title>
 	</head>
 
 	<body>
@@ -25,7 +25,8 @@
 			</div>
 		</form>
 
-		<h1>未交人员名单</h1>
+		<h1>提交情况阅览板</h1>
+		<small> 未提交人数: {{ nsn }}</small>
 		<div class="content">
 			{% for member in members %}
 			<div class="member" style="color: {{ member.state }}">{{ member.name }}</div>
@@ -93,6 +94,13 @@ body {
 	  background-color: rgb(255, 255, 153);
 	  color: #b030b0;
   }
+
+  h1,small {
+	  display: inline-block;
+	  margin: 0;
+	  height: 40px;
+  }
+
 </style>
 <style>
 form {
